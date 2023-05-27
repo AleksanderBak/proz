@@ -8,7 +8,7 @@ void *startKomWatek(void *ptr)
     int is_message = FALSE;
     packet_t pakiet;
     /* Obrazuje pętlę odbierającą pakiety o różnych typach */
-    while ( stan!=InFinish ) {
+    while (TRUE) {
 	debug("czekam na recv");
         MPI_Recv( &pakiet, 1, MPI_PAKIET_T, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 
@@ -18,13 +18,36 @@ void *startKomWatek(void *ptr)
 
         switch ( status.MPI_TAG ) {
 	    case REQUEST: 
-                debug("Ktoś coś prosi. A niech ma!")
-		sendPacket( 0, status.MPI_SOURCE, ACK );
-	    break;
+            debug("Ktoś coś prosi. A niech ma!");
+            packet_t *pkt = malloc(sizeof(packet_t));
+            pkt->ts = lamport;
+            sendPacket(pkt, status.MPI_SOURCE, ACK );
+            queue[pakiet.src].is_inside = true;
+            queue[pakiet.src].cuch_count = pakiet.otaku_cuch_count;
+            queue[pakiet.src].lamport = pakiet.ts;
+            free(pkt);
+            break;
+
 	    case ACK: 
-                debug("Dostałem ACK od %d, mam już %d", status.MPI_SOURCE, ackCount);
+            debug("Dostałem ACK od %d, mam już %d", status.MPI_SOURCE, ackCount);
 	        ackCount++; /* czy potrzeba tutaj muteksa? Będzie wyścig, czy nie będzie? Zastanówcie się. */
-	    break;
+	        break;
+
+        case TOXIC:
+            K = 0;
+            if (queue[rank].is_inside) {
+                for (int i = 0; i <= size - 1; i++)
+					if (i != rank)
+						sendPacket(pkt, (rank + 1) % size, RELEASE);            
+            }
+            sleep(5);
+            break;
+
+        case RELEASE:
+            queue[pakiet.src].is_inside = false;
+            K += queue[pakiet.src].cuch_count;
+            break;
+
 	    default:
 	    break;
         }

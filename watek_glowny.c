@@ -3,61 +3,71 @@
 
 void mainLoop()
 {
-    srandom(rank);
-    int tag;
-    int perc;
+	srandom(rank);
+	int tag;
+	int perc;
+	queue[rank].cuch_count = 1;
 
-    while (stan != InFinish) {
-	switch (stan) {
-	    case InRun: 
-		perc = random()%100;
-		if ( perc < 25 ) {
-		    debug("Perc: %d", perc);
-		    println("Ubiegam się o sekcję krytyczną")
-		    debug("Zmieniam stan na wysyłanie");
-		    packet_t *pkt = malloc(sizeof(packet_t));
-		    pkt->data = perc;
-		    ackCount = 0;
-		    for (int i=0;i<=size-1;i++)
-			if (i!=rank)
-			    sendPacket( pkt, i, REQUEST);
-		    changeState( InWant ); // w VI naciśnij ctrl-] na nazwie funkcji, ctrl+^ żeby wrócić
-					   // :w żeby zapisać, jeżeli narzeka że w pliku są zmiany
-					   // ewentualnie wciśnij ctrl+w ] (trzymasz ctrl i potem najpierw w, potem ]
-					   // między okienkami skaczesz ctrl+w i strzałki, albo ctrl+ww
-					   // okienko zamyka się :q
-					   // ZOB. regułę tags: w Makefile (naciśnij gf gdy kursor jest na nazwie pliku)
-		    free(pkt);
-		} // a skoro już jesteśmy przy komendach vi, najedź kursorem na } i wciśnij %  (niestety głupieje przy komentarzach :( )
-		debug("Skończyłem myśleć");
-		break;
-	    case InWant:
-		println("Czekam na wejście do sekcji krytycznej")
-		// tutaj zapewne jakiś muteks albo zmienna warunkowa
-		// bo aktywne czekanie jest BUE
-		if ( ackCount == size - 1) 
-		    changeState(InSection);
-		break;
-	    case InSection:
-		// tutaj zapewne jakiś muteks albo zmienna warunkowa
-		println("Jestem w sekcji krytycznej")
-		    sleep(2);
-		//if ( perc < 25 ) {
-		    debug("Perc: %d", perc);
-		    println("Wychodzę z sekcji krytyczneh")
-		    debug("Zmieniam stan na wysyłanie");
-		    packet_t *pkt = malloc(sizeof(packet_t));
-		    pkt->data = perc;
-		    for (int i=0;i<=size-1;i++)
-			if (i!=rank)
-			    sendPacket( pkt, (rank+1)%size, RELEASE);
-		    changeState( InRun );
-		    free(pkt);
-		//}
-		break;
-	    default: 
-		break;
-            }
-        sleep(SEC_IN_STATE);
-    }
+	while (true)
+	{
+		perc = random() % 100;
+
+		switch (stan)
+		{
+		case Outside:
+			if (perc < 25) {
+				println("Chcę wejść do pokoju")
+					debug("Zmieniam stan na wysyłanie");
+				packet_t *pkt = malloc(sizeof(packet_t));
+				pkt->otaku_cuch_count = queue[rank].cuch_count;
+				ackCount = 0;
+				for (int i = 0; i <= size - 1; i++)
+					sendPacket(pkt, i, REQUEST);
+				changeState(WaitingEntrance);
+				free(pkt);
+			}
+			debug("Skończyłem myśleć");
+			break;
+
+		case WaitingEntrance:
+			println("Czekam na wejście do pokoju");
+				// TODO
+				// tutaj zapewne jakiś muteks albo zmienna warunkowa
+				// bo aktywne czekanie jest BUE
+				if (ackCount == size && front_otaku_cuchs(lamport, queue) + queue[rank].cuch_count < M && front_otaku_count(lamport, queue) < S) {
+					if (front_otaku_cuchs(lamport, queue) + queue[rank].cuch_count + K > X) {
+						packet_t *pkt = malloc(sizeof(packet_t));
+						debug("Zgłaszam chęć wymiany organizatora");
+						for (int i = 0; i <= size - 1; i++)
+							sendPacket(pkt, i, TOXIC);
+						free(pkt);
+					}
+					changeState(Inside);
+					queue[rank].is_inside = true;
+				}
+			break;
+
+		case Inside:
+			// tutaj zapewne jakiś muteks albo zmienna warunkowa
+			println("Jestem w sali");
+			if ( perc < 10 ) {
+				println("Wychodzę z sali")
+					debug("Zmieniam stan na wysyłanie");
+				packet_t *pkt = malloc(sizeof(packet_t));
+				for (int i = 0; i <= size - 1; i++)
+					if (i != rank)
+						sendPacket(pkt, (rank + 1) % size, RELEASE);
+				queue[rank].cuch_count += random() % 4 + 1;
+				debug("Moja nowa liczba cuchów: %d", queue[rank].cuch_count);
+				changeState(Outside);
+				queue[rank].is_inside = false;
+				free(pkt);
+			}
+			break;
+
+		default:
+			break;
+		}
+		sleep(SEC_IN_STATE);
+	}
 }

@@ -7,12 +7,15 @@
  * W main.h extern int rank (zapowiedź) w main.c int rank (definicja)
  * Zwróćcie uwagę, że każdy proces ma osobą pamięć, ale w ramach jednego
  * procesu wątki współdzielą zmienne - więc dostęp do nich powinien
- * być obwarowany muteksami. Rank i size akurat są write-once, więc nie trzeba,
+ * być obwarowany muteksami. Ranka i size akurat są write-once, więc nie trzeba,
  * ale zob util.c oraz util.h - zmienną state_t state i funkcję changeState
  *
  */
 int rank, size;
 int ackCount = 0;
+int K = 0;
+otaku_request queue[N];
+
 /* 
  * Każdy proces ma dwa wątki - główny i komunikacyjny
  * w plikach, odpowiednio, watek_glowny.c oraz (siurpryza) watek_komunikacyjny.c

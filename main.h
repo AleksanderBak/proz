@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
+#include <stdbool.h>
 
 #include "util.h"
 /* boolean */
@@ -17,13 +18,19 @@
 
 #define ROOT 0
 
+#define S 3
+#define N 4
+#define X 12
+#define M 6
+
 /* tutaj TYLKO zapowiedzi - definicje w main.c */
 extern int lamport;
 extern int rank;
 extern int size;
 extern int ackCount;
+extern int K;
 extern pthread_t threadKom;
-
+extern otaku_request queue[];
 
 
 
