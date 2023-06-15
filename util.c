@@ -76,7 +76,7 @@ void changeState( state_t newState )
 int front_otaku_cuchs(int lamport, otaku_request queue[]) {
     int sum = 0;
     for (int i = 0; i < N; i++) {
-        if (queue[i].lamport < lamport && queue[i].is_inside) {
+        if ((queue[i].lamport < lamport && queue[i].is_inside)||(queue[i].lamport == lamport && queue[i].is_inside && i < rank)) {
             sum += queue[i].cuch_count;
         }
     }
@@ -86,7 +86,7 @@ int front_otaku_cuchs(int lamport, otaku_request queue[]) {
 int front_otaku_count(int lamport, otaku_request queue[]) {
     int sum = 0;
     for (int i = 0; i < N; i++) {
-        if (queue[i].lamport < lamport && queue[i].is_inside) {
+        if ((queue[i].lamport < lamport && queue[i].is_inside)||(queue[i].lamport == lamport && queue[i].is_inside && i < rank)) {
             sum ++;
         }
     }

@@ -21,10 +21,10 @@ void *startKomWatek(void *ptr)
             debug("Ktoś coś prosi. A niech ma!");
             packet_t *pkt = malloc(sizeof(packet_t));
             pkt->ts = lamport;
-            sendPacket(pkt, status.MPI_SOURCE, ACK );
             queue[pakiet.src].is_inside = true;
             queue[pakiet.src].cuch_count = pakiet.otaku_cuch_count;
             queue[pakiet.src].lamport = pakiet.ts;
+            sendPacket(pkt, status.MPI_SOURCE, ACK );
             free(pkt);
             break;
 
@@ -36,9 +36,11 @@ void *startKomWatek(void *ptr)
         case TOXIC:
             K = 0;
             if (queue[rank].is_inside) {
+                packet_t *pkt = malloc(sizeof(packet_t));
+                pkt->ts = lamport;
                 for (int i = 0; i <= size - 1; i++)
-					if (i != rank)
-						sendPacket(pkt, (rank + 1) % size, RELEASE);            
+					sendPacket(pkt, (rank + 1) % size, RELEASE);
+                free(pkt);            
             }
             sleep(5);
             break;
